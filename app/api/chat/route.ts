@@ -17,7 +17,9 @@ export async function POST(req: NextRequest) {
 
     // Use gemini-pro for text-only messages and gemini-pro-vision for images
     const modelName =
-      typeof lastMessage.content !== "string" && lastMessage.content.image_url ? "gemini-pro-vision" : "gemini-pro"
+      typeof lastMessage.content !== "string" && lastMessage.content.image_url
+        ? "gemini-1.5-flash" // Updated to Gemini 1.5 Flash
+        : "gemini-1.5-flash" // You can use "gemini-1.5-pro" for better responses
 
     const model = genAI.getGenerativeModel({ model: modelName })
 
