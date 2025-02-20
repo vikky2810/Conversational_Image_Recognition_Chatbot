@@ -1,14 +1,12 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { ImageUpload } from "./image-upload"
 import Image from "next/image"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle, X } from "lucide-react"
 
 interface Message {
   id: string
@@ -25,9 +23,25 @@ export default function Chat() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setImageUrl(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleCancelImage = () => {
+    setImageUrl(null)
+    if (fileInputRef.current) fileInputRef.current.value = ""
+  }
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value)
-    setError(null) // Clear any previous errors
+    setError(null)
   }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -44,17 +58,11 @@ export default function Chat() {
     }
 
     try {
-      // Add user message immediately
       setMessages((prev) => [...prev, newMessage])
-
-      // Clear input and image
       setInput("")
       setImageUrl(null)
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""
-      }
+      if (fileInputRef.current) fileInputRef.current.value = ""
 
-      // Send request to API
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -62,16 +70,9 @@ export default function Chat() {
       })
 
       const data = await response.json()
+      if (!response.ok) throw new Error(data.error || "Failed to get response from API")
+      if (data.error) throw new Error(data.error)
 
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to get response from API")
-      }
-
-      if (data.error) {
-        throw new Error(data.error)
-      }
-
-      // Add AI response
       setMessages((prev) => [
         ...prev,
         {
@@ -83,8 +84,6 @@ export default function Chat() {
     } catch (error) {
       console.error("Error in chat:", error)
       setError(error instanceof Error ? error.message : "An unexpected error occurred")
-
-      // Add error message to chat
       setMessages((prev) => [
         ...prev,
         {
@@ -98,18 +97,17 @@ export default function Chat() {
     }
   }
 
-  // Auto-scroll to bottom when messages change
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
     }
-  }, [chatContainerRef]) //Corrected dependency
+  }, [messages, isTyping])
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader>
-          <CardTitle>Image Recognition Chatbot (Gemini)</CardTitle>
+          <CardTitle>Image Recognition Chatbot</CardTitle>
         </CardHeader>
         <CardContent className="h-[60vh] overflow-y-auto space-y-4" ref={chatContainerRef}>
           {messages.length === 0 && (
@@ -130,13 +128,15 @@ export default function Chat() {
                   <div>
                     <div className="mb-2">{m.content.text}</div>
                     {m.content.image_url && (
-                      <Image
-                        src={m.content.image_url || "/placeholder.svg"}
-                        alt="Uploaded image"
-                        width={200}
-                        height={200}
-                        className="rounded-md"
-                      />
+                      <div className="flex justify-center">
+                        <Image
+                          src={m.content.image_url}
+                          alt="Uploaded image"
+                          width={200}
+                          height={200}
+                          className="rounded-md"
+                        />
+                      </div>
                     )}
                   </div>
                 )}
@@ -156,14 +156,53 @@ export default function Chat() {
           )}
         </CardContent>
         <CardFooter>
-          <form onSubmit={handleSubmit} className="flex w-full space-x-2">
-            <ImageUpload onImageUpload={setImageUrl} fileInputRef={fileInputRef} />
-            <Input
-              value={input}
-              onChange={handleInputChange}
-              placeholder={imageUrl ? "Ask about the image..." : "Type your message..."}
-              className="flex-grow"
+          <form onSubmit={handleSubmit} className="flex w-full gap-2">
+            {!imageUrl && (
+              <Button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                variant="outline"
+              >
+                Upload Image
+              </Button>
+            )}
+            <input
+              type="file"
+              ref={fileInputRef}
+              accept="image/*"
+              onChange={handleFileChange}
+              className="hidden"
             />
+
+            <div className="relative flex-grow">
+              {imageUrl && (
+                <div className="absolute left-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                  <Image
+                    src={imageUrl}
+                    alt="Image preview"
+                    width={40}
+                    height={40}
+                    className="rounded-md border"
+                  />
+                  <Button
+                    type="button"
+                    onClick={handleCancelImage}
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+              <Input
+                value={input}
+                onChange={handleInputChange}
+                placeholder={imageUrl ? "Ask about the image..." : "Type your message..."}
+                className={imageUrl ? "pl-[120px]" : "pl-12"} // Adjusted padding to account for image and cancel icon
+              />
+            </div>
+
             <Button type="submit" disabled={isTyping}>
               {isTyping ? "Sending..." : "Send"}
             </Button>
@@ -173,4 +212,3 @@ export default function Chat() {
     </div>
   )
 }
-
