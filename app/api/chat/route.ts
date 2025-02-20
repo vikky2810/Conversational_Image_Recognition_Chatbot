@@ -15,13 +15,14 @@ export async function POST(req: NextRequest) {
     const { messages } = await req.json()
     const lastMessage = messages[messages.length - 1]
 
-    // Use gemini-pro for text-only messages and gemini-pro-vision for images
-    const modelName =
-      typeof lastMessage.content !== "string" && lastMessage.content.image_url
-        ? "gemini-1.5-flash" // Updated to Gemini 1.5 Flash
-        : "gemini-1.5-flash" // You can use "gemini-1.5-pro" for better responses
+    // Use gemini-2-flash for better speed and efficiency
+const modelName =
+typeof lastMessage.content !== "string" && lastMessage.content.image_url
+  ? "gemini-2.0-flash" // Updated to Gemini 2.0 Flash
+  : "gemini-2.0-flash"; // Use the same model for both text and image inputs
 
-    const model = genAI.getGenerativeModel({ model: modelName })
+const model = genAI.getGenerativeModel({ model: modelName });
+
 
     // Format the conversation history for the model
     const prompt = messages
