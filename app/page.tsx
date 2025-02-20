@@ -109,7 +109,7 @@ export default function Chat() {
     <div className="flex items-center justify-center min-h-screen bg-gray-100 p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader>
-          <CardTitle>Image Recognition Chatbot (Gemini)</CardTitle>
+          <CardTitle>Image Recognition Chatbot</CardTitle>
         </CardHeader>
         <CardContent className="h-[60vh] overflow-y-auto space-y-4" ref={chatContainerRef}>
           {messages.length === 0 && (
