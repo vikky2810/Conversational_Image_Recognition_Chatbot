@@ -2,7 +2,7 @@
 
 ### It's a chatbot that can see and talk! 👀💬
 
-### Simple Breakdown (Like You're 5)
+### Simple Breakdown
 
 - **What is it?** → A smart chatbot that understands both **text** and **images**.
 - **What does it do?** → You **upload an image**, and it **recognizes objects** inside it. Then, you can **ask questions about the image**, and it replies correctly.
